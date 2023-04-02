@@ -43,9 +43,9 @@ data "aws_ami" "ubuntu" {
 }
 
 resource "aws_instance" "web" {
-  ami                    = data.aws_ami.ubuntu.id
-  instance_type          = "t2.micro"
-  user_data = <<-EOF
+  ami           = data.aws_ami.ubuntu.id
+  instance_type = "t2.micro"
+  user_data     = <<-EOF
               #!/bin/bash
               apt-get update
               apt-get install -y apache2
