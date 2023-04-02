@@ -46,7 +46,7 @@ resource "aws_instance" "web" {
   ami                    = data.aws_ami.ubuntu.id
   instance_type          = "t2.micro"
   vpc_security_group_ids = [aws_security_group.web-sg.id]
-
+  subnet_id = "subnet-0f5e8a6adba3ccd7f"
   user_data = <<-EOF
               #!/bin/bash
               apt-get update
