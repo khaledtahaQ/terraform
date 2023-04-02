@@ -1,5 +1,3 @@
-
-
 # Copyright (c) HashiCorp, Inc.
 # SPDX-License-Identifier: MPL-2.0
 
@@ -7,7 +5,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 3.0"
+      version = "4.52.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -27,8 +25,8 @@ terraform {
 
 provider "aws" {
   access_key = TF_VAR_AWS_SECRET_ACCESS_KEY
-  secret_key = TF_VAR_AWS_ACCESS_KEY_ID 
-  region = "us-east-1"
+  secret_key = TF_VAR_AWS_ACCESS_KEY_ID
+  region     = "us-east-1"
 }
 
 resource "random_pet" "sg" {}
