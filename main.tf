@@ -26,6 +26,8 @@ terraform {
 }
 
 provider "aws" {
+  access_key = TF_VAR_AWS_SECRET_ACCESS_KEY
+  secret_key = TF_VAR_AWS_ACCESS_KEY_ID 
   region = "us-east-1"
 }
 
@@ -51,6 +53,7 @@ resource "aws_instance" "web" {
   ami                    = data.aws_ami.ubuntu.id
   instance_type          = "t2.micro"
   vpc_security_group_ids = [aws_security_group.web-sg.id]
+
   user_data = <<-EOF
               #!/bin/bash
               apt-get update
