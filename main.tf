@@ -26,6 +26,8 @@ terraform {
 }
 
 provider "aws" {
+  access_key = TF_VAR_AWS_SECRET_ACCESS_KEY
+  secret_key = TF_VAR_AWS_ACCESS_KEY_ID 
   region = "us-east-1"
 }
 
