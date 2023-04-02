@@ -63,6 +63,7 @@ resource "aws_instance" "web" {
 }
 
 resource "aws_security_group" "web-sg" {
+  subnet_id = "subnet-0d3891944acd1a24a"
   name = "${random_pet.sg.id}-sg"
   ingress {
     from_port   = 8080
@@ -77,7 +78,6 @@ resource "aws_security_group" "web-sg" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  subnet_id = "subnet-0d3891944acd1a24a"
 }
 
 output "web-address" {
