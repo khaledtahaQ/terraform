@@ -79,9 +79,6 @@ jobs:
                 body: output
               })
             }
-      # .github/workflows/staging.yaml
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: terraform apply -input=false 
-        shell: bash
-
+        run: terraform apply -auto-approve -input=false
