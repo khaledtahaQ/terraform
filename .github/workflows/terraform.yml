@@ -56,12 +56,8 @@ jobs:
             #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
             <details><summary>Show Plan</summary>
               <code>
-            #!/bin/bash
 
-              # Run a command without any Markdown formatting
-              cat << 'EOF'
               echo "${process.env.PLAN} "
-              EOF
 
               
             </details>
