@@ -52,7 +52,7 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           repo-token-user-login: 'github-actions[bot]'
           message: |
-            ${{ process.env.PLAN }}
+            ${{ steps.plan.outputs.stdout }}
 
       - name: Terraform Plan Status
         if: steps.plan.outcome == 'failure'
