@@ -47,8 +47,6 @@ jobs:
         if: github.event_name == 'pull_request'
         env:
           PLAN: ${{ steps.plan.outputs.stdout }}
-        run: |
-          echo "Plan: \${{process.env.PLAN}}"
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -57,8 +55,10 @@ jobs:
             #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
             #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
             <details><summary>Show Plan</summary>
-
-
+              <p>
+                 ${process.env.PLAN}
+              </p>
+              
             </details>
             *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
             github.rest.issues.createComment({
