@@ -1,103 +1,93 @@
-# .github/workflows/staging.yaml
-name: 'Terraform - Staging'
+name: "Terraform"
 
 on:
   push:
     branches:
-    - main
+      - main
   pull_request:
-    branches:
-    - main
-# .github/workflows/staging.yaml
-permissions:
-  contents: read
-  pull-requests: write
-# .github/workflows/staging.yaml
-jobs: 
+
+jobs:
   terraform:
+    name: "Terraform"
     runs-on: ubuntu-latest
-    name: Terraform
-    environment: staging 
+    permissions:
+      pull-requests: write
     steps:
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v2
-      with:
-        terraform_version: 1.1.9
-        terraform_wrapper: false
-# .github/workflows/staging.yaml
-    - name: Terraform Init
-      id: init
-      run: terraform init
-      env:
-        ARM_CLIENT_ID: ${{ secrets.CLIENT_ID }} # This doesn't have to be a secret. Client IDs are not sensitive.
-        ARM_CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
-        ARM_SUBSCRIPTION_ID: "[Your Subscription ID]"
-        ARM_TENANT_ID: "[Your Tenant ID]"
-      working-directory: ./staging # Use your environment folder
-      shell: bash
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ssh-key: ${{ secrets.GIT }}
 
-    # .github/workflows/staging.yaml
-    - name: Terraform Plan
-      id: plan
-      run: |
-        terraform plan -input=false -no-color -out tf.plan
-      env:
-        ARM_CLIENT_ID: ${{ secrets.CLIENT_ID }} 
-        ARM_CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
-        ARM_SUBSCRIPTION_ID: "[Your Subscription ID]"
-        ARM_TENANT_ID: "[Your Tenant ID]"
-      working-directory: ./staging # Use your environment folder
-      shell: bash
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          # terraform_version: 1.4.2
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
-    # .github/workflows/staging.yaml
-    - name: Terraform Show
-      id: show
-      run: terraform show -no-color tf.plan 2>&1 > /tmp/plan.txt
-      working-directory: ./staging # Use your environment folder
-      env:
-        ARM_CLIENT_ID: ${{ secrets.CLIENT_ID }} 
-        ARM_CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
-        ARM_SUBSCRIPTION_ID: "[Your Subscription ID]"
-        ARM_TENANT_ID: "[Your Tenant ID]"
-      shell: bash
-    # .github/workflows/staging.yaml
-    - uses: actions/github-script@v6
-      if: github.event_name == 'pull_request'
-      with:
-        github-token: ${{ inputs.GITHUB_TOKEN }}
-        script: |
-          const fs = require("fs");
-          const plan = fs.readFileSync("/tmp/plan.txt", "utf8");
-          const maxGitHubBodyCharacters = 65536;
+      - name: Terraform Format
+        id: fmt
+        run: terraform fmt -check
 
-          function chunkSubstr(str, size) {
-            const numChunks = Math.ceil(str.length / size)
-            const chunks = new Array(numChunks)
-            for (let i = 0, o = 0; i < numChunks; ++i, o += size) {
-              chunks[i] = str.substr(o, size)
+      - name: Terraform Init
+        id: init
+        run: terraform init
+
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color
+
+      - name: Terraform Plan
+        id: plan
+        if: github.event_name == 'pull_request'
+        run: |
+          terraform plan -input=false -no-color -out tf.plan
+        continue-on-error: true
+
+      - name: Terraform Show
+        id: show
+        run: terraform show -no-color tf.plan 2>&1 > /tmp/plan.txt
+        shell: bash
+      # .github/workflows/staging.yaml
+      - uses: actions/github-script@v6
+        if: github.event_name == 'pull_request'
+        with:
+          github-token: ${{ inputs.GITHUB_TOKEN }}
+          script: |
+            const fs = require("fs");
+            const plan = fs.readFileSync("/tmp/plan.txt", "utf8");
+            const maxGitHubBodyCharacters = 65536;
+            
+            function chunkSubstr(str, size) {
+              const numChunks = Math.ceil(str.length / size)
+              const chunks = new Array(numChunks)
+              for (let i = 0, o = 0; i < numChunks; ++i, o += size) {
+                chunks[i] = str.substr(o, size)
+              }
+              return chunks
             }
-            return chunks
-          }
+            
+            // Split the Terraform plan into chunks if it's too big and can't fit into the GitHub Action
+            var plans = chunkSubstr(plan, maxGitHubBodyCharacters); 
+            for (let i = 0; i < plans.length; i++) {
+              const output = `### ${{ inputs.plan-title }} Part # ${i + 1}
+              #### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+              #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
+              #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+              <details><summary>Show Plan</summary>
+              \`\`\`\n
+              ${plans[i]}
+              \`\`\`
+              </details>
+              *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Working Directory: \`${{ inputs.working-directory }}\`, Workflow: \`${{ github.workflow }}\`*`;   
+            
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: output
+              })
+            }
 
-          // Split the Terraform plan into chunks if it's too big and can't fit into the GitHub Action
-          var plans = chunkSubstr(plan, maxGitHubBodyCharacters); 
-          for (let i = 0; i < plans.length; i++) {
-            const output = `### ${{ inputs.plan-title }} Part # ${i + 1}
-            #### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
-            #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
-            #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
-            <details><summary>Show Plan</summary>
-            \`\`\`\n
-            ${plans[i]}
-            \`\`\`
-            </details>
-            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Working Directory: \`${{ inputs.working-directory }}\`, Workflow: \`${{ github.workflow }}\`*`;   
-
-            await github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
-            })
-          }
-
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: terraform apply -auto-approve -input=false
