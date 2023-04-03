@@ -57,7 +57,7 @@ jobs:
             <details><summary>Show Plan</summary>
               <code>
 
-              echo "${process.env.PLAN} "
+             echo `echo "${process.env.PLAN} "`
 
               
             </details>
