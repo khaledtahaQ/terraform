@@ -1,21 +1,28 @@
-name: "Terraform"
+
+name: 'Terraform'
 
 on:
   push:
     branches:
       - main
+
   pull_request:
+
+permissions:
+  contents: read
+  pull-requests: write
 
 jobs:
   terraform:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     name: Terraform
+    environment: staging
     steps:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
-          terraform_version: 1.1.9
-          terraform_wrapper: false
+          # terraform_version: 1.4.2
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
       - name: Terraform Format
         id: fmt
@@ -31,15 +38,15 @@ jobs:
 
       - name: Terraform Plan
         id: plan
-        if: github.event_name == 'pull_request'
-        run: terraform plan -input=false -no-color  -input=false
-        continue-on-error: true
-      # .github/workflows/staging.yaml
+        run: |
+          terraform plan -input=false -no-color -out tf.plan
+        shell: bash
+
       - name: Terraform Show
         id: show
-        run: terraform show -no-color  2>&1 > /tmp/plan.txt
+        run: terraform show -no-color tf.plan 2>&1 > /tmp/plan.txt
         shell: bash
-      # .github/workflows/staging.yaml
+
       - uses: actions/github-script@v6
         if: github.event_name == 'pull_request'
         with:
@@ -79,3 +86,9 @@ jobs:
                 body: output
               })
             }
+
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: terraform apply -input=false tf.plan
+        shell: bash
+
