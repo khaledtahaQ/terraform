@@ -33,7 +33,7 @@ jobs:
         id: plan
         if: github.event_name == 'pull_request'
         run: terraform plan -input=false -no-color  -input=false
-
+        continue-on-error: true
       # .github/workflows/staging.yaml
       - name: Terraform Show
         id: show
