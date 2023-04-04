@@ -79,8 +79,7 @@ jobs:
             const fs = require('fs');
             const path = require('path');
             let result = "";
-            const directoryPath = '/path/to/directory';
-
+            const directoryPath = './src/envs/prod/';
             fs.readdir(directoryPath, (err, files) => {
               if (err) {
                 console.error(`Error reading directory: ${err}`);
@@ -114,7 +113,6 @@ jobs:
               });
             });
 
-            const directoryPath = './src/envs/prod/';
             const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
             #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
             #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
