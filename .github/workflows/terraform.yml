@@ -69,72 +69,15 @@ jobs:
           done
         continue-on-error: true
 
-      - name: Update Pull Request
-        uses: actions/github-script@v6
-        if: github.event_name == 'pull_request'
-        env:
-          PLAN: ${{ steps.plan.outputs.stdout }}
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const fs = require('fs');
-            const path = require('path');
-            let result = "";
-            const directoryPath = './src/envs/prod/';
-            fs.readdir(directoryPath, (err, files) => {
-              if (err) {
-                console.error(`Error reading directory: ${err}`);
-                return;
-              }
-
-              const dataFiles = files.filter(file => {
-                const filePath = path.join(directoryPath, file);
-                return fs.statSync(filePath).isDirectory() && file === 'result';
-              });
-
-              dataFiles.forEach(dataDir => {
-                const dataDirPath = path.join(directoryPath, dataDir);
-                fs.readdir(dataDirPath, (err, dataFiles) => {
-                  if (err) {
-                    console.error(`Error reading directory ${dataDirPath}: ${err}`);
-                    return;
-                  }
-                  dataFiles.forEach(dataFile => {
-                    const filePath = path.join(dataDirPath, dataFile);
-                    fs.readFile(filePath, 'utf8', (err, data) => {
-                      if (err) {
-                        console.error(`Error reading file ${filePath}: ${err}`);
-                        return;
-                      }
-                      result = result + data + "\n";
-                      console.log(`File ${filePath} contents: ${data}`);
-                    });
-                  });
-                });
-              });
-            });
-
-            const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
-            #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
-            #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
-            #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
-
-            <details><summary>Show Plan</summary>
-
-            \`\`\`terraform\n
-            ${result}
-            \`\`\`
-
-            </details>
-
-            *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
-            })
 
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: terraform apply -auto-approve -input=false
+        run: |
+          for dir in ./src/envs/prod/*; do
+            if [ -d "$dir" ]; then
+              echo "Initialization $dir"
+              cd $dir
+              terraform apply -auto-approve -input=false
+            fi
+          done
+
