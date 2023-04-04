@@ -9,7 +9,7 @@ on:
 jobs:
   terraform:
     name: "Terraform"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     permissions:
       pull-requests: write
     steps:
@@ -68,16 +68,14 @@ jobs:
           done
         continue-on-error: true
 
-      - name: Update Pull Request
-        uses: actions/github-script@v6
-        if: github.event_name == 'pull_request'
-        env:
-          PLAN: ${{ steps.plan.outputs.stdout }}
+      - name: Set up Node.js environment
+        uses: actions/setup-node@v2
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            process.env.NODE_OPTIONS="--max_old_space_size=20480"
-            const fs = require('fs');
+          node-version: '14.x'
+        env: 
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: | 
+          echo "            const fs = require('fs');
             const path = require('path');
 
             function readFilesRecursively(dir) {
@@ -119,6 +117,11 @@ jobs:
               repo: context.repo.repo,
               body: output
             })
+                "> script.js
+
+      - name: Run script with increased memory limit
+        run: node --max-old-space-size=4096 script.js
+
 
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
