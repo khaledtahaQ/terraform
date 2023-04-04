@@ -64,11 +64,24 @@ jobs:
             if [ -d "$dir" ]; then
               echo "Initialization $dir"
               cd $dir
-              terraform plan -no-color -input=false  > result
-            cat result
+              terraform plan -no-color -input=false -out tf.plan
             fi
           done
         continue-on-error: true
+
+      - name: Terraform Show
+        id: show
+        run: |
+          for dir in ./src/envs/prod/*; do
+            i=0
+            if [ -d "$dir" ]; then
+              echo "Initialization $dir"
+              cd $dir
+              terraform show -no-color tf.plan 2>&1 > /tmp/prod-${i}.txt
+              i=$((i+1))
+            fi
+          done
+        shell: bash
 
       - name: Update Pull Request
         uses: actions/github-script@v6
@@ -79,7 +92,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require("fs");
-            const plan = fs.readFileSync("src/envs/prod/khaled/result", "utf8");
+            const plan = fs.readFileSync("/tmp/prod-0.txt", "utf8");
             const maxGitHubBodyCharacters = 65536;
             
             function chunkSubstr(str, size) {
