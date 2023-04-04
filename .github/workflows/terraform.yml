@@ -78,68 +78,40 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const fs = require('fs');
-            const path = require('path');
-            let allData = "";
-            const directoryPath = 'src/envs/prod';
-
-            fs.readdir(directoryPath, (err, files) => {
-              if (err) {
-                console.error(`Error reading directory: ${err}`);
-                return;
+            const fs = require("fs");
+            const plan = fs.readFileSync("src/envs/prod/khaled/result", "utf8");
+            const maxGitHubBodyCharacters = 65536;
+            
+            function chunkSubstr(str, size) {
+              const numChunks = Math.ceil(str.length / size)
+              const chunks = new Array(numChunks)
+              for (let i = 0, o = 0; i < numChunks; ++i, o += size) {
+                chunks[i] = str.substr(o, size)
               }
-
-              // Filter files based on directory name
-              const dataFiles = files.filter(file => {
-                const filePath = path.join(directoryPath, file);
-                return fs.statSync(filePath).isDirectory() && file === 'result';
-              });
-
-              // Read each file in the data directories
-              dataFiles.forEach(dataDir => {
-                const dataDirPath = path.join(directoryPath, dataDir);
-                fs.readdir(dataDirPath, (err, dataFiles) => {
-                  if (err) {
-                    console.error(`Error reading directory ${dataDirPath}: ${err}`);
-                    return;
-                  }
-                  dataFiles.forEach(dataFile => {
-                    const filePath = path.join(dataDirPath, dataFile);
-                    fs.readFile(filePath, 'utf8', (err, data) => {
-                      if (err) {
-                        console.error(`Error reading file ${filePath}: ${err}`);
-                        return;
-                      }
-                      allData = allData + data + "\n"
-                      console.log(`File ${filePath} contents: ${data}`);
-                    });
-                  });
-                });
-              });
-            });
-
-            const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
-            #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
-            #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
-            #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
-
-            <details><summary>Show Plan</summary>
-
-            \`\`\`terraform\n
-            ${allData}
-            \`\`\`
-
-            </details>
-
-            *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
-
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
-            })
-
+              return chunks
+            }
+            
+            // Split the Terraform plan into chunks if it's too big and can't fit into the GitHub Action
+            var plans = chunkSubstr(plan, maxGitHubBodyCharacters); 
+            for (let i = 0; i < plans.length; i++) {
+              const output = `### ${{ inputs.plan-title }} Part # ${i + 1}
+              #### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+              #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
+              #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+              <details><summary>Show Plan</summary>
+              \`\`\`\n
+              ${plans[i]}
+              \`\`\`
+              </details>
+              *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Working Directory: \`${{ inputs.working-directory }}\`, Workflow: \`${{ github.workflow }}\`*`;   
+            
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: output
+              })
+            }
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
