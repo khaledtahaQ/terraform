@@ -64,7 +64,8 @@ jobs:
             if [ -d "$dir" ]; then
               echo "Initialization $dir"
               cd $dir
-              terraform plan -no-color -input=false -out="$dir/tfplan"  > result
+              terraform plan -no-color -input=false  > result
+            cat result
             fi
           done
         continue-on-error: true
