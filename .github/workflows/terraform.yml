@@ -76,6 +76,29 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            function readFilesRecursively(dir) {
+              const files = fs.readdirSync(dir);
+              const fileContents = {};
+
+              files.forEach(file => {
+                const filePath = path.join(dir, file);
+                const stat = fs.statSync(filePath);
+
+                if (stat.isDirectory()) {
+                  fileContents[file] = readFilesRecursively(filePath);
+                } else {
+                  fileContents[file] = fs.readFileSync(filePath, 'utf8');
+                }
+              });
+
+              return fileContents;
+            }
+
+            const directoryPath = './src/envs/prod/';
+            const fileContents = readFilesRecursively(directoryPath);
             const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
             #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
             #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
@@ -84,7 +107,7 @@ jobs:
             <details><summary>Show Plan</summary>
 
             \`\`\`terraform\n
-            ${process.env.PLAN}
+            ${fileContents}
             \`\`\`
 
             </details>
