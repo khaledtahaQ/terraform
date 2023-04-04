@@ -44,7 +44,8 @@ jobs:
           for dir in ./src/envs/prod/*; do
             if [ -d "$dir" ]; then
               echo "Initialization $dir"
-              terraform validate "$dir"
+              cd $dir
+              terraform validate 
             fi
           done
 
