@@ -9,7 +9,7 @@ on:
 jobs:
   terraform:
     name: "Terraform"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     permissions:
       pull-requests: write
     steps:
@@ -63,44 +63,59 @@ jobs:
           for dir in ./src/envs/prod/*; do
             if [ -d "$dir" ]; then
               echo "Initialization $dir"
-              terraform plan -no-color -input=false -out="$dir/tfplan" "$dir"
+              terraform plan -no-color -input=false -out="$dir/tfplan" "$dir" > result
             fi
           done
         continue-on-error: true
 
-      - name: Set up Node.js environment
-        uses: actions/setup-node@v2
+      - name: Update Pull Request
+        uses: actions/github-script@v6
+        if: github.event_name == 'pull_request'
+        env:
+          PLAN: ${{ steps.plan.outputs.stdout }}
         with:
-          node-version: '14.x'
-      
-      - name: create script
-        env: 
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: | 
-          echo "            const fs = require('fs');
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
             const path = require('path');
+            let result = "";
+            const directoryPath = '/path/to/directory';
 
-            function readFilesRecursively(dir) {
-              const files = fs.readdirSync(dir);
-              const fileContents = {};
+            fs.readdir(directoryPath, (err, files) => {
+              if (err) {
+                console.error(`Error reading directory: ${err}`);
+                return;
+              }
 
-              files.forEach(file => {
-                const filePath = path.join(dir, file);
-                const stat = fs.statSync(filePath);
-
-                if (stat.isDirectory()) {
-                  fileContents[file] = readFilesRecursively(filePath);
-                } else {
-                  fileContents[file] = fs.readFileSync(filePath, 'utf8');
-                }
+              const dataFiles = files.filter(file => {
+                const filePath = path.join(directoryPath, file);
+                return fs.statSync(filePath).isDirectory() && file === 'result';
               });
 
-              return fileContents;
-            }
+              dataFiles.forEach(dataDir => {
+                const dataDirPath = path.join(directoryPath, dataDir);
+                fs.readdir(dataDirPath, (err, dataFiles) => {
+                  if (err) {
+                    console.error(`Error reading directory ${dataDirPath}: ${err}`);
+                    return;
+                  }
+                  dataFiles.forEach(dataFile => {
+                    const filePath = path.join(dataDirPath, dataFile);
+                    fs.readFile(filePath, 'utf8', (err, data) => {
+                      if (err) {
+                        console.error(`Error reading file ${filePath}: ${err}`);
+                        return;
+                      }
+                      result = result + data + "\n";
+                      console.log(`File ${filePath} contents: ${data}`);
+                    });
+                  });
+                });
+              });
+            });
 
             const directoryPath = './src/envs/prod/';
-            console.log(JSON.stringify(readFilesRecursively(directoryPath)))
-            const output = '`#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+            const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
             #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
             #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
             #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
@@ -108,18 +123,18 @@ jobs:
             <details><summary>Show Plan</summary>
 
             \`\`\`terraform\n
-            ${JSON.stringify(readFilesRecursively(directoryPath))}
+            ${result}
             \`\`\`
 
             </details>
 
-            *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*` '
-                "> script.js
-
-
-      - name: Run script with increased memory limit
-        run: node --max-old-space-size=4096 script.js
-
+            *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
 
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
