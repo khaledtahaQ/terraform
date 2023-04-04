@@ -98,7 +98,7 @@ jobs:
             }
 
             const directoryPath = './src/envs/prod/';
-            const fileContents = readFilesRecursively(directoryPath);
+            const fileContents = readFilesRecursively(directoryPath).toString();
             const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
             #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
             #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
