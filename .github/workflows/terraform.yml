@@ -44,18 +44,15 @@ jobs:
             fi
           done
 
-
       - name: Terraform Validate
         id: validate
         run: |
-                    for dir in ./src/envs/prod/*; do
+          for dir in ./src/envs/prod/*; do
             if [ -d "$dir" ]; then
               echo "Initialization $dir"
               terraform validate -no-color -out="$dir/tfplan" "$dir"
             fi
           done
-
-          
 
       - name: Terraform Plan
         id: plan
@@ -67,8 +64,6 @@ jobs:
               terraform plan -no-color -input=false -out="$dir/tfplan" "$dir"
             fi
           done
-
-         
         continue-on-error: true
 
       - name: Update Pull Request
