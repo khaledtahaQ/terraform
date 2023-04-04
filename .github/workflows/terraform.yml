@@ -73,6 +73,7 @@ jobs:
         if: github.event_name == 'pull_request'
         env:
           PLAN: ${{ steps.plan.outputs.stdout }}
+        run: export NODE_OPTIONS=--max_old_space_size=20480
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
