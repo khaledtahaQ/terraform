@@ -31,21 +31,44 @@ jobs:
             if [ -d "$dir" ]; then
               echo "Planning $dir"
               terraform fmt -check -out="$dir/tfplan" "$dir"
-              fi
+            fi
           done
 
       - name: Terraform Init
         id: init
-        run: terraform init
+        run: |
+          for dir in ./src/envs/prod/*; do
+            if [ -d "$dir" ]; then
+              echo "Initialization $dir"
+              terraform init -out="$dir/tfplan" "$dir"
+            fi
+          done
+
 
       - name: Terraform Validate
         id: validate
-        run: terraform validate -no-color
+        run: |
+                    for dir in ./src/envs/prod/*; do
+            if [ -d "$dir" ]; then
+              echo "Initialization $dir"
+              terraform validate -no-color -out="$dir/tfplan" "$dir"
+            fi
+          done
+
+          
 
       - name: Terraform Plan
         id: plan
         if: github.event_name == 'pull_request'
-        run: terraform plan -no-color -input=false
+        run: |
+          for dir in ./src/envs/prod/*; do
+            if [ -d "$dir" ]; then
+              echo "Initialization $dir"
+              terraform plan -no-color -input=false -out="$dir/tfplan" "$dir"
+            fi
+          done
+
+         
         continue-on-error: true
 
       - name: Update Pull Request
