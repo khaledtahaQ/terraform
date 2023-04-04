@@ -30,7 +30,7 @@ jobs:
           for dir in ./src/envs/prod/*; do
             if [ -d "$dir" ]; then
               echo "Planning $dir"
-              terraform fmt -check -out="$dir/tfplan" "$dir"
+              terraform fmt -check  "$dir"
             fi
           done
 
