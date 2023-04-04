@@ -113,13 +113,9 @@ jobs:
             </details>
 
             *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
-            })
+            console.log(output)
                 "> script.js
+
 
       - name: Run script with increased memory limit
         run: node --max-old-space-size=4096 script.js
