@@ -36,13 +36,7 @@ jobs:
 
       - name: Terraform Init
         id: init
-        run: |
-          for dir in ./src/envs/prod/*; do
-            if [ -d "$dir" ]; then
-              echo "Initialization $dir"
-              terraform init -out="$dir/tfplan" "$dir"
-            fi
-          done
+        run: terraform init
 
       - name: Terraform Validate
         id: validate
@@ -50,7 +44,7 @@ jobs:
           for dir in ./src/envs/prod/*; do
             if [ -d "$dir" ]; then
               echo "Initialization $dir"
-              terraform validate -no-color -out="$dir/tfplan" "$dir"
+              terraform validate "$dir"
             fi
           done
 
