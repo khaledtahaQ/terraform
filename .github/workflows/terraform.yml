@@ -63,7 +63,8 @@ jobs:
           for dir in ./src/envs/prod/*; do
             if [ -d "$dir" ]; then
               echo "Initialization $dir"
-              terraform plan -no-color -input=false -out="$dir/tfplan" "$dir" > result
+              cd $dir
+              terraform plan -no-color -input=false -out="$dir/tfplan"  > result
               cat result
             fi
           done
