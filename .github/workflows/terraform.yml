@@ -65,6 +65,7 @@ jobs:
 
       - name: Terraform Show
         id: show
+        if: github.event_name == 'pull_request'
         run: |
           i=0
           for dir in ${GITHUB_WORKSPACE}/src/envs/prod/*; do
@@ -74,13 +75,6 @@ jobs:
             fi
           done
         shell: bash
-
-      - name: list temp
-        id: list
-        run: |
-          ls /tmp
-        shell: bash
-
       - name: Update Pull Request
         uses: actions/github-script@v6
         if: github.event_name == 'pull_request'
@@ -144,11 +138,9 @@ jobs:
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
-          for dir in ./src/envs/prod/*; do
+          for dir in ${GITHUB_WORKSPACE}/src/envs/prod/*; do
             if [ -d "$dir" ]; then
-              echo "Initialization $dir"
-              cd $dir
-              terraform apply -auto-approve -input=false
+              terraform -chdir=$dir apply -auto-approve -input=false
             fi
           done
 
