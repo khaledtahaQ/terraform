@@ -83,6 +83,13 @@ jobs:
           done
         shell: bash
 
+      - name: list temp
+        id: list
+        run: |
+          ls /tmp
+          echo  $(ls /tmp)
+        shell: bash
+
       - name: Update Pull Request
         uses: actions/github-script@v6
         if: github.event_name == 'pull_request'
@@ -111,7 +118,6 @@ jobs:
             try {
                 const files = fs.readdirSync(directoryPath);
                 files.forEach((file) => {
-            console.log(files)
                     if (file.startsWith(filePrefix)) {
                         const filePath = path.join(directoryPath, file);
                         const plan = fs.readFileSync(filePath, 'utf8');
