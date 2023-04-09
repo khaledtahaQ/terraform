@@ -24,7 +24,8 @@ jobs:
       - name: Terraform Format
         id: fmt
         run: |
-          for dir in ./src/envs/prod/*; do
+          directories=$(ls ./src/envs/prod/)
+          for dir in $directories; do
             if [ -d "$dir" ]; then
               echo "Planning $dir"
               terraform fmt -check  "$dir"
@@ -34,7 +35,8 @@ jobs:
       - name: Terraform Init
         id: init
         run: |
-          for dir in ./src/envs/prod/*; do
+          directories=$(ls ./src/envs/prod/)
+          for dir in $directories; do
             if [ -d "$dir" ]; then
               echo "Planning $dir"
               cd $dir
@@ -45,7 +47,8 @@ jobs:
       - name: Terraform Validate
         id: validate
         run: |
-          for dir in ./src/envs/prod/*; do
+          directories=$(ls ./src/envs/prod/)
+          for dir in $directories; do
             if [ -d "$dir" ]; then
               echo "Initialization $dir"
               cd $dir
@@ -60,7 +63,8 @@ jobs:
           AWS_ACCESS_KEY_ID:  ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY:  ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
-          for dir in ./src/envs/prod/*; do
+          directories=$(ls ./src/envs/prod/)
+          for dir in $directories; do
             if [ -d "$dir" ]; then
               echo "Initialization $dir"
               cd $dir
@@ -73,8 +77,9 @@ jobs:
         id: show
         run: |
           i=0
-          echo $pwd
-          for dir in ./src/envs/prod/*; do
+          directories=$(ls ./src/envs/prod/)
+          echo $directories
+          for dir in $directories; do
             if [ -d "$dir" ]; then
               echo "Initialization $dir"
               cd $dir
