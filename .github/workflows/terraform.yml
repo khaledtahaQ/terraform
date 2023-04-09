@@ -36,9 +36,7 @@ jobs:
         run: |
           for dir in ./src/envs/prod/*; do
             if [ -d "$dir" ]; then
-              echo "Planning $dir"
-              cd $dir
-              terraform init
+              terraform init -chdir=$dir
             fi
           done
 
@@ -47,9 +45,7 @@ jobs:
         run: |
           for dir in ./src/envs/prod/*; do
             if [ -d "$dir" ]; then
-              echo "Initialization $dir"
-              cd $dir
-              terraform validate 
+              terraform validate -chdir=$dir
             fi
           done
 
@@ -62,9 +58,8 @@ jobs:
         run: |
           for dir in ./src/envs/prod/*; do
             if [ -d "$dir" ]; then
-              echo "Initialization $dir"
-              cd $dir
-              terraform plan -no-color -input=false -out tf.plan
+          
+              terraform plan -chdir=$dir -no-color -input=false -out tf.plan
             fi
           done
         continue-on-error: true
@@ -75,9 +70,7 @@ jobs:
           i=0
           for dir in ./src/envs/prod/*; do
             if [ -d "$dir" ]; then
-              echo "Initialization $dir"
-              cd $dir
-              terraform show -no-color tf.plan 2>&1 > /tmp/prod-${i}.txt
+              terraform show -chdir=$dir -no-color tf.plan 2>&1 > /tmp/prod-${i}.txt
               i=$((i+1))
             fi
           done
@@ -87,7 +80,6 @@ jobs:
         id: list
         run: |
           ls /tmp
-          ls /home/runner/work/terraform/terraform/src/envs/prod
         shell: bash
 
       - name: Update Pull Request
