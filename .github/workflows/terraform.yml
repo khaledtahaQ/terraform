@@ -123,10 +123,10 @@ jobs:
                         
                               <details><summary>Show Plan</summary>
                         
-                
+                        `\`\`\`terraform\n
                               ${plans[i]}
                              
-                        
+                        `\`\`\`
                               </details>
                         
                               *Pushed by: @${{ github.actor }}, Working Directory: \`${{ inputs.working-directory }}\`, Action: \`${{ github.event_name }}\`*`;
