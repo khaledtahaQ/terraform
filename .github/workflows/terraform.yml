@@ -87,7 +87,7 @@ jobs:
         id: list
         run: |
           ls /tmp
-          ls ./src/envs/prod
+          ls /home/runner/work/terraform/terraform/src/envs/prod
         shell: bash
 
       - name: Update Pull Request
