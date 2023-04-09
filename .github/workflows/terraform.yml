@@ -36,7 +36,7 @@ jobs:
         run: |
           for dir in ${GITHUB_WORKSPACE}/src/envs/prod/*; do
             if [ -d "$dir" ]; then
-              terraform-chdir=$dir init
+              terraform -chdir=$dir init
             fi
           done
 
