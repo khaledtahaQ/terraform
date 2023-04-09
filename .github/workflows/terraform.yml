@@ -111,6 +111,7 @@ jobs:
             try {
                 const files = fs.readdirSync(directoryPath);
                 files.forEach((file) => {
+            console.log(files)
                     if (file.startsWith(filePrefix)) {
                         const filePath = path.join(directoryPath, file);
                         const plan = fs.readFileSync(filePath, 'utf8');
