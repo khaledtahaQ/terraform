@@ -72,8 +72,8 @@ jobs:
       - name: Terraform Show
         id: show
         run: |
+          i=0
           for dir in ./src/envs/prod/*; do
-            i=0
             if [ -d "$dir" ]; then
               echo "Initialization $dir"
               cd $dir
