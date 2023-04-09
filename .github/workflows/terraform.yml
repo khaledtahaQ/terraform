@@ -94,8 +94,7 @@ jobs:
             const fs = require("fs");
             const path = require('path');
             const directoryPath = '/tmp/';
-            const filePrefix = "prod-";
-            const plan = fs.readFileSync("/tmp/prod-0.txt", "utf8");
+            const filePrefix = "prod";
             const maxGitHubBodyCharacters = 65536;
 
             // Split the Terraform plan into chunks if it's too big and can't fit into the GitHub Action
