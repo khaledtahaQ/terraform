@@ -94,7 +94,7 @@ jobs:
             const fs = require("fs");
             const path = require('path');
             const directoryPath = '/tmp/';
-            const filePrefix = 'prod';
+            const filePrefix = "prod-";
             const plan = fs.readFileSync("/tmp/prod-0.txt", "utf8");
             const maxGitHubBodyCharacters = 65536;
 
