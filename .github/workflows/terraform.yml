@@ -24,10 +24,10 @@ jobs:
       - name: Terraform Format
         id: fmt
         run: |
-          directories=$(ls ./src/envs/prod/)
-          for dir in $directories; do
+          for dir in /home/runner/work/terraform/terraform/src/envs/prod/*; do
             if [ -d "$dir" ]; then
               echo "Planning $dir"
+              cd /home/runner/work/terraform/terraform/src/envs/prod/$dir
               terraform fmt -check  "$dir"
             fi
           done
@@ -35,11 +35,10 @@ jobs:
       - name: Terraform Init
         id: init
         run: |
-          directories=$(ls ./src/envs/prod/)
-          for dir in $directories; do
+          for dir in /home/runner/work/terraform/terraform/src/envs/prod/*; do
             if [ -d "$dir" ]; then
               echo "Planning $dir"
-              cd $dir
+              cd /home/runner/work/terraform/terraform/src/envs/prod/$dir
               terraform init
             fi
           done
@@ -47,11 +46,10 @@ jobs:
       - name: Terraform Validate
         id: validate
         run: |
-          directories=$(ls ./src/envs/prod/)
-          for dir in $directories; do
+          for dir in /home/runner/work/terraform/terraform/src/envs/prod/*; do
             if [ -d "$dir" ]; then
               echo "Initialization $dir"
-              cd $dir
+              cd /home/runner/work/terraform/terraform/src/envs/prod/$dir
               terraform validate 
             fi
           done
@@ -64,10 +62,10 @@ jobs:
           AWS_SECRET_ACCESS_KEY:  ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
           directories=$(ls ./src/envs/prod/)
-          for dir in $directories; do
+          for dir in /home/runner/work/terraform/terraform/src/envs/prod/*; do
             if [ -d "$dir" ]; then
               echo "Initialization $dir"
-              cd $dir
+              cd /home/runner/work/terraform/terraform/src/envs/prod/$dir
               terraform plan -no-color -input=false -out tf.plan
             fi
           done
@@ -77,13 +75,10 @@ jobs:
         id: show
         run: |
           i=0
-          directories=$(ls ./src/envs/prod/)
-          echo $directories
-          echo $PWD
-          for dir in $directories; do
+          for dir in /home/runner/work/terraform/terraform/src/envs/prod/*; do
             if [ -d "$dir" ]; then
               echo "Initialization $dir"
-              cd $dir
+              cd /home/runner/work/terraform/terraform/src/envs/prod/$dir
               terraform show -no-color tf.plan 2>&1 > /tmp/prod-${i}.txt
               i=$((i+1))
             fi
