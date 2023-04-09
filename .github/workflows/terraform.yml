@@ -116,14 +116,16 @@ jobs:
                         const plan = fs.readFileSync(filePath, 'utf8');
                         var plans = chunkSubstr(plan, maxGitHubBodyCharacters);
                         for (let i = 0; i < plans.length; i++) {
-                              const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
-                              #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
-                              #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
-                              #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
+                              const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\` \n
+                              #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\` \n
+                              #### Terraform Plan 📖\`${{ steps.plan.outcome }}\` \n
+                              #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\` \n
                         
-                              <details><summary>Show Plan</summary>
+                              <details><summary>Show Plan</summary>\n
                         
-                        `\${plans[i]}`\
+                        `\`\`\terraform\n
+                              ${plans[i]}
+                        `\`\`\end\n
                               </details>
                         
                               *Pushed by: @${{ github.actor }}, Working Directory: \`${{ inputs.working-directory }}\`, Action: \`${{ github.event_name }}\`*`;
