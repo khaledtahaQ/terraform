@@ -87,7 +87,7 @@ jobs:
         id: list
         run: |
           ls /tmp
-          echo  $(ls /tmp)
+          ls /src/envs/prod/
         shell: bash
 
       - name: Update Pull Request
