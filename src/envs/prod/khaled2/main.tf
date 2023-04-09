@@ -67,7 +67,7 @@ resource "aws_security_group" "web-sg2" {
 }
 
 output "web-address" {
-  value = "${aws_instance.web.public_dns}:8080"
+  value = "${aws_instance.web2.public_dns}:8080"
 }
 
 
