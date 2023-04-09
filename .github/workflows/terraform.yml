@@ -24,7 +24,7 @@ jobs:
       - name: Terraform Format
         id: fmt
         run: |
-          for dir in ./src/envs/prod/*; do
+          for dir in ${GITHUB_WORKSPACE}/src/envs/prod/*; do
             if [ -d "$dir" ]; then
               echo "Planning $dir"
               terraform fmt -check  "$dir"
@@ -34,7 +34,7 @@ jobs:
       - name: Terraform Init
         id: init
         run: |
-          for dir in ./src/envs/prod/*; do
+          for dir in ${GITHUB_WORKSPACE}/src/envs/prod/*; do
             if [ -d "$dir" ]; then
               terraform-chdir=$dir init
             fi
@@ -43,7 +43,7 @@ jobs:
       - name: Terraform Validate
         id: validate
         run: |
-          for dir in ./src/envs/prod/*; do
+          for dir in ${GITHUB_WORKSPACE}/src/envs/prod/*; do
             if [ -d "$dir" ]; then
               terraform -chdir=$dir validate 
             fi
@@ -56,7 +56,7 @@ jobs:
           AWS_ACCESS_KEY_ID:  ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY:  ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
-          for dir in ./src/envs/prod/*; do
+          for dir in ${GITHUB_WORKSPACE}/src/envs/prod/*; do
             if [ -d "$dir" ]; then
               terraform -chdir=$dir plan -no-color -input=false -out tf.plan
             fi
@@ -67,7 +67,7 @@ jobs:
         id: show
         run: |
           i=0
-          for dir in ./src/envs/prod/*; do
+          for dir in ${GITHUB_WORKSPACE}/src/envs/prod/*; do
             if [ -d "$dir" ]; then
               terraform -chdir=$dir show -no-color tf.plan 2>&1 > /tmp/prod-${i}.txt
               i=$((i+1))
