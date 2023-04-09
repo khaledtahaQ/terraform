@@ -33,12 +33,7 @@ jobs:
 
       - name: Terraform Init
         id: init
-        run: |
-          for dir in ./src/envs/prod/*; do
-            if [ -d "$dir" ]; then
-              terraform init -chdir=$dir
-            fi
-          done
+        run: terraform init
 
       - name: Terraform Validate
         id: validate
