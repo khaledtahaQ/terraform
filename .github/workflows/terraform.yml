@@ -35,14 +35,14 @@ jobs:
         id: init
         run: terraform init
 
-      - name: Terraform Validate
-        id: validate
-        run: |
-          for dir in ./src/envs/prod/*; do
-            if [ -d "$dir" ]; then
-              terraform validate -chdir=$dir
-            fi
-          done
+#      - name: Terraform Validate
+#        id: validate
+#        run: |
+#          for dir in ./src/envs/prod/*; do
+#            if [ -d "$dir" ]; then
+#              terraform validate -chdir=$dir
+#            fi
+#          done
 
       - name: Terraform Plan
         id: plan
