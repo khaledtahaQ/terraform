@@ -35,14 +35,14 @@ jobs:
         id: init
         run: terraform init
 
-#      - name: Terraform Validate
-#        id: validate
-#        run: |
-#          for dir in ./src/envs/prod/*; do
-#            if [ -d "$dir" ]; then
-#              terraform validate -chdir=$dir
-#            fi
-#          done
+      - name: Terraform Validate
+        id: validate
+        run: |
+          for dir in ./src/envs/prod/*; do
+            if [ -d "$dir" ]; then
+              terraform -chdir=$dir validate 
+            fi
+          done
 
       - name: Terraform Plan
         id: plan
@@ -53,8 +53,7 @@ jobs:
         run: |
           for dir in ./src/envs/prod/*; do
             if [ -d "$dir" ]; then
-          
-              terraform plan -chdir=$dir -no-color -input=false -out tf.plan
+              terraform -chdir=$dir plan -no-color -input=false -out tf.plan
             fi
           done
         continue-on-error: true
@@ -65,7 +64,7 @@ jobs:
           i=0
           for dir in ./src/envs/prod/*; do
             if [ -d "$dir" ]; then
-              terraform show -chdir=$dir -no-color tf.plan 2>&1 > /tmp/prod-${i}.txt
+              terraform -chdir=$dir show -no-color tf.plan 2>&1 > /tmp/prod-${i}.txt
               i=$((i+1))
             fi
           done
