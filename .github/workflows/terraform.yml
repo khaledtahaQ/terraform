@@ -118,10 +118,10 @@ jobs:
                         for (let i = 0; i < plans.length; i++) {
                               const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
                               #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\` 
-                              #### Terraform Plan 📖\`${{ steps.plan.outcome }}\` \n
+                              #### Terraform Plan 📖\`${{ steps.plan.outcome }}\` 
                               #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
                         
-                              <details><summary>Show Plan</summary>\n
+                              <details><summary>Show Plan</summary>
                         
                         `\`\`\terraform\n
                               ${plans[i]}
