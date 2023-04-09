@@ -73,6 +73,7 @@ jobs:
         id: show
         run: |
           i=0
+          echo $pwd
           for dir in ./src/envs/prod/*; do
             if [ -d "$dir" ]; then
               echo "Initialization $dir"
@@ -87,7 +88,6 @@ jobs:
         id: list
         run: |
           ls /tmp
-          ls /src/envs/prod/
         shell: bash
 
       - name: Update Pull Request
