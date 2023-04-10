@@ -21,9 +21,13 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
 
+      - name: Set output
+        id: vars
+        run: echo ::set-output name=short_ref::${GITHUB_REF#refs/*/}
+
       - name : Get Changed Files
         run : |
-          GIT="${{ github.event.pull_request.head.ref}}"
+          GIT="${{ steps.vars.outputs.short_ref }}"
           echo $GIT 
           DIFF=$(git diff --name-only main...${GIT} | xargs dirname )
           echo "export DIFF=${DIFF}" >> $GITHUB_ENV
