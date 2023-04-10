@@ -23,7 +23,8 @@ jobs:
 
       - name : Get Changed Files
         run : |
-          GIT="${GITHUB_REF##*/}"
+          GIT="${{ github.event.pull_request.base.ref }}"
+          echo $GIT
           DIFF=$(git diff --name-only main...${GIT} | xargs dirname )
           echo "export DIFF=${DIFF}" >> $GITHUB_ENV
 
