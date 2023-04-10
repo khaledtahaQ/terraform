@@ -21,31 +21,36 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
 
+      - name : Get Changed Files
+        run : |
+          DIFF=$(git diff --name-only main...${GITHUB_REF##*/} | xargs dirname )
+          echo "export DIFF=${DIFF}" >> $GITHUB_ENV
+
       - name: Terraform Format
         id: fmt
         run: |
-          for dir in ${GITHUB_WORKSPACE}/src/envs/prod/*; do
+          for dir in ${DIFF}; do
             if [ -d "$dir" ]; then
               echo "Planning $dir"
-              terraform fmt -check  "$dir"
+              terraform fmt -check  "${GITHUB_WORKSPACE}/${DIFF}"
             fi
           done
 
       - name: Terraform Init
         id: init
         run: |
-          for dir in ${GITHUB_WORKSPACE}/src/envs/prod/*; do
+          for dir in ${DIFF}; do
             if [ -d "$dir" ]; then
-              terraform -chdir=$dir init
+              terraform -chdir=${GITHUB_WORKSPACE}/${DIFF} init
             fi
           done
 
       - name: Terraform Validate
         id: validate
         run: |
-          for dir in ${GITHUB_WORKSPACE}/src/envs/prod/*; do
+          for dir in ${DIFF}; do
             if [ -d "$dir" ]; then
-              terraform -chdir=$dir validate 
+              terraform -chdir=${GITHUB_WORKSPACE}/${DIFF} validate 
             fi
           done
 
@@ -56,9 +61,9 @@ jobs:
           AWS_ACCESS_KEY_ID:  ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY:  ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
-          for dir in ${GITHUB_WORKSPACE}/src/envs/prod/*; do
+          for dir in ${DIFF}; do
             if [ -d "$dir" ]; then
-              terraform -chdir=$dir plan -no-color -input=false -out tf.plan
+              terraform -chdir=${GITHUB_WORKSPACE}/${DIFF} plan -no-color -input=false -out tf.plan
             fi
           done
         continue-on-error: true
@@ -68,9 +73,9 @@ jobs:
         if: github.event_name == 'pull_request'
         run: |
           i=0
-          for dir in ${GITHUB_WORKSPACE}/src/envs/prod/*; do
+          for dir in ${DIFF}; do
             if [ -d "$dir" ]; then
-              terraform -chdir=$dir show -no-color tf.plan 2>&1 > /tmp/prod-${i}.txt
+              terraform -chdir=${GITHUB_WORKSPACE}/${DIFF} show -no-color tf.plan 2>&1 > /tmp/prod-${i}.txt
               i=$((i+1))
             fi
           done
