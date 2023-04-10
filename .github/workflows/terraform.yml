@@ -23,7 +23,8 @@ jobs:
 
       - name : Get Changed Files
         run : |
-          DIFF=$(git diff --name-only main...${GITHUB_REF##*/} | xargs dirname )
+          GIT="${GITHUB_REF##*/}"
+          DIFF=$(git diff --name-only main...${GIT} | xargs dirname )
           echo "export DIFF=${DIFF}" >> $GITHUB_ENV
 
       - name: Terraform Format
