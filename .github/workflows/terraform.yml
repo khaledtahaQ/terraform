@@ -29,7 +29,7 @@ jobs:
         run : |
           GIT="${{ steps.vars.outputs.short_ref }}"
           echo $GIT 
-          DIFF=$(git diff --name-only main...${GIT} | xargs dirname )
+          DIFF=$(git diff --name-only main...${{ github.head_ref || github.ref_name }} | xargs dirname )
           echo "export DIFF=${DIFF}" >> $GITHUB_ENV
 
       - name: Terraform Format
