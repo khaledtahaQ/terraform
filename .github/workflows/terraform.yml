@@ -26,10 +26,15 @@ jobs:
         id: vars
         run: echo ::set-output name=short_ref::${GITHUB_REF#refs/*/}
 
-      - name : Get Changed Files
-        run : |
-          DIFF=$(git diff --name-only main ${{ github.event.pull_request.base.ref }} | xargs dirname )
-          echo "export DIFF=${DIFF}" >> $GITHUB_ENV
+      - id: files
+        uses: jitterbit/get-changed-files@v1
+      - run: |
+          echo "export DIFF=${{ steps.files.outputs.all }}" >> $GITHUB_ENV
+
+      # - name : Get Changed Files
+      #   run : |
+      #     DIFF=$(git diff --name-only main ${{ github.event.pull_request.base.ref }} | xargs dirname )
+      #     
 
       - name: Terraform Format
         id: fmt
