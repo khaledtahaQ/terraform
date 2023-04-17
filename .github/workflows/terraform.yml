@@ -28,7 +28,12 @@ jobs:
 
       - name : Get Changed Files
         run : |
-          DIFF=$(git diff --name-only origin/main origin/${{ github.event.pull_request.base.ref }} | xargs dirname )
+          git diff --name-only origin/main origin/${{ github.event.pull_request.base.ref }} > /tmp/changed.txt
+          cat /tmp/changed.txt
+
+      - name : Get Changed Files
+        run : |
+          DIFF=$(cat /tmp/changed.txt | xargs dirname )
           echo "export DIFF=${DIFF}" >> $GITHUB_ENV
 
       - name: Terraform Format
