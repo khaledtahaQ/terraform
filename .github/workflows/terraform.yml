@@ -30,16 +30,11 @@ jobs:
         run : |
           git diff --name-only origin/main origin/${{ github.event.pull_request.base.ref }} > /tmp/changed.txt
           cat /tmp/changed.txt
-          DIFF=$(cat /tmp/changed.txt | xargs dirname )
-
-      - name : Get Changed Files
-        run : |
-          DIFF=$(cat /tmp/changed.txt | xargs dirname )
-          echo "export DIFF=${DIFF}" >> $GITHUB_ENV
 
       - name: Terraform Format
         id: fmt
         run: |
+        DIFF=$(cat /tmp/changed.txt | xargs dirname )
           for dir in ${DIFF}; do
             if [ -d "$dir" ]; then
               echo "Planning $dir"
@@ -50,6 +45,7 @@ jobs:
       - name: Terraform Init
         id: init
         run: |
+        DIFF=$(cat /tmp/changed.txt | xargs dirname )
           for dir in ${DIFF}; do
             if [ -d "$dir" ]; then
               terraform -chdir=${GITHUB_WORKSPACE}/${DIFF} init
@@ -59,6 +55,7 @@ jobs:
       - name: Terraform Validate
         id: validate
         run: |
+        DIFF=$(cat /tmp/changed.txt | xargs dirname )
           for dir in ${DIFF}; do
             if [ -d "$dir" ]; then
               terraform -chdir=${GITHUB_WORKSPACE}/${DIFF} validate 
@@ -72,6 +69,7 @@ jobs:
           AWS_ACCESS_KEY_ID:  ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY:  ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
+        DIFF=$(cat /tmp/changed.txt | xargs dirname )
           for dir in ${DIFF}; do
             if [ -d "$dir" ]; then
               terraform -chdir=${GITHUB_WORKSPACE}/${DIFF} plan -no-color -input=false -out tf.plan
@@ -84,6 +82,7 @@ jobs:
         if: github.event_name == 'pull_request'
         run: |
           i=0
+          DIFF=$(cat /tmp/changed.txt | xargs dirname )
           for dir in ${DIFF}; do
             if [ -d "$dir" ]; then
               terraform -chdir=${GITHUB_WORKSPACE}/${DIFF} show -no-color tf.plan 2>&1 > /tmp/prod-${i}.txt
