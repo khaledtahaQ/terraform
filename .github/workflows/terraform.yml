@@ -30,6 +30,7 @@ jobs:
         run : |
           git diff --name-only origin/main origin/${{ github.event.pull_request.base.ref }} > /tmp/changed.txt
           cat /tmp/changed.txt
+          DIFF=$(cat /tmp/changed.txt | xargs dirname )
 
       - name : Get Changed Files
         run : |
