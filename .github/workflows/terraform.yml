@@ -38,7 +38,8 @@ jobs:
           for dir in ${DIFF}; do
             if [ -d "$dir" ]; then
               echo "Planning $dir"
-              terraform fmt -check  "${GITHUB_WORKSPACE}/${DIFF}"
+              path=$(echo "${GITHUB_WORKSPACE}/${DIFF}" | tr -d " \t\n\r")
+              terraform fmt -check  "${path}"
             fi
           done
 
@@ -48,7 +49,8 @@ jobs:
           DIFF=$(cat /tmp/changed.txt | xargs dirname )
           for dir in ${DIFF}; do
             if [ -d "$dir" ]; then
-              terraform -chdir=${GITHUB_WORKSPACE}/${DIFF} init
+              path=$(echo "${GITHUB_WORKSPACE}/${DIFF}" | tr -d " \t\n\r")
+              terraform -chdir=${path} init
             fi
           done
 
