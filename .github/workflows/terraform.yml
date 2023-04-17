@@ -28,39 +28,41 @@ jobs:
 
       - name : Get Changed Files
         run : |
-          git diff --name-only origin/main origin/${{ github.event.pull_request.base.ref }} > /tmp/changed.txt
+          git diff --name-only origin/main origin/${{ github.event.pull_request.base.ref }} > /tmp/temp-changed.txt
+          temp_dir=$(cat /tmp/temp-changed.txt) 
+          for dir in ${temp_dir}; do
+              path=$(echo "${GITHUB_WORKSPACE}/${dir}" | xargs dirname)
+              echo $path >> /tmp/changed.txt
+          done
           cat /tmp/changed.txt
 
       - name: Terraform Format
         id: fmt
         run: |
-          DIFF=$(cat /tmp/changed.txt | xargs dirname )
+          DIFF=$(cat /tmp/changed.txt )
           for dir in ${DIFF}; do
             if [ -d "$dir" ]; then
-              echo "Planning $dir"
-              path=$(echo "${DIFF}" | tr -d " \t\n\r")
-              terraform fmt -check  "${GITHUB_WORKSPACE}//${path}"
+              terraform fmt -check  "${dir}" 
             fi
           done
 
       - name: Terraform Init
         id: init
         run: |
-          DIFF=$(cat /tmp/changed.txt | xargs dirname )
+          DIFF=$(cat /tmp/changed.txt )
           for dir in ${DIFF}; do
             if [ -d "$dir" ]; then
-              path=$(echo "${DIFF}" | tr -d " \t\n\r")
-              terraform -chdir=${GITHUB_WORKSPACE}//${path} init
+              terraform -chdir=${dir} init
             fi
           done
 
       - name: Terraform Validate
         id: validate
         run: |
-          DIFF=$(cat /tmp/changed.txt | xargs dirname )
+          DIFF=$(cat /tmp/changed.txt )
           for dir in ${DIFF}; do
             if [ -d "$dir" ]; then
-              terraform -chdir=${GITHUB_WORKSPACE}/${DIFF} validate 
+              terraform -chdir=${dir} validate 
             fi
           done
 
@@ -71,10 +73,10 @@ jobs:
           AWS_ACCESS_KEY_ID:  ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY:  ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
-          DIFF=$(cat /tmp/changed.txt | xargs dirname )
+          DIFF=$(cat /tmp/changed.txt )
           for dir in ${DIFF}; do
             if [ -d "$dir" ]; then
-              terraform -chdir=${GITHUB_WORKSPACE}/${DIFF} plan -no-color -input=false -out tf.plan
+              terraform -chdir=${dir} plan -no-color -input=false -out tf.plan
             fi
           done
         continue-on-error: true
@@ -84,14 +86,17 @@ jobs:
         if: github.event_name == 'pull_request'
         run: |
           i=0
-          DIFF=$(cat /tmp/changed.txt | xargs dirname )
+          DIFF=$(cat /tmp/changed.txt )
           for dir in ${DIFF}; do
             if [ -d "$dir" ]; then
-              terraform -chdir=${GITHUB_WORKSPACE}/${DIFF} show -no-color tf.plan 2>&1 > /tmp/prod-${i}.txt
+              terraform -chdir=${dir} show -no-color tf.plan 2>&1 > /tmp/prod-${i}.txt
               i=$((i+1))
             fi
           done
         shell: bash
+      - name : list tmp
+        run : |
+          ls /tmp/
       - name: Update Pull Request
         uses: actions/github-script@v6
         if: github.event_name == 'pull_request'
