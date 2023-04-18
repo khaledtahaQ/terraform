@@ -5,6 +5,8 @@ on:
     branches:
       - main
   pull_request:
+    branches:
+      - main
 
 jobs:
   terraform:
@@ -28,7 +30,7 @@ jobs:
 
       - name : Get Changed Files
         run : |
-          git diff --name-only origin/main origin/${{ github.event.pull_request.base.ref }} > /tmp/temp-changed.txt
+          git diff --name-only ${{process.env.GITHUB_HEAD_REF}} ${{ process.env.GITHUB_BASE_REF}} > /tmp/temp-changed.txt
           temp_dir=$(cat /tmp/temp-changed.txt) 
           for dir in ${temp_dir}; do
               path=$(echo "${GITHUB_WORKSPACE}/${dir}" | xargs dirname)
