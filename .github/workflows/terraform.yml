@@ -30,7 +30,7 @@ jobs:
 
       - name : Get Changed Files
         run : |
-          git diff --name-only ${{github.base_ref}} ${{ github.head_ref}} > /tmp/temp-changed.txt
+          git diff --name-only origin/${{github.base_ref}} origin/${{ github.head_ref}} > /tmp/temp-changed.txt
           temp_dir=$(cat /tmp/temp-changed.txt) 
           for dir in ${temp_dir}; do
               path=$(echo "${GITHUB_WORKSPACE}/${dir}" | xargs dirname)
