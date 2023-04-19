@@ -92,6 +92,7 @@ jobs:
           for dir in ${DIFF}; do
             if [ -d "$dir" ]; then
               terraform -chdir=${dir} show -no-color tf.plan 2>&1 > /tmp/prod-${i}.txt
+              cat /tmp/prod-${i}.txt | grep -o  "chdir.*" | sed -e  "s/show -no-color tf.plan//g" | sed -e "s/^$(echo ${GITHUB_WORKSPACE} | sed 's/\//\\\//g')//g" >/tmp/path-${i}.txt
               i=$((i+1))
             fi
           done
@@ -129,14 +130,16 @@ jobs:
                 files.forEach((file) => {
                     if (file.startsWith(filePrefix)) {
                         const filePath = path.join(directoryPath, file);
+                        const folderPath = filePath.replace("prod","path");
                         const plan = fs.readFileSync(filePath, 'utf8');
+                        const folder = fs.readFileSync(folderPath, 'utf8');
                         var plans = chunkSubstr(plan, maxGitHubBodyCharacters);
               for (let i = 0; i < plans.length; i++) {
               const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
               #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
               #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
               #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
-            
+              path : ${{folder}}
               <details><summary>Show Plan</summary>
             
               \`\`\`terraform\n
