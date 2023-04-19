@@ -87,7 +87,7 @@ jobs:
           DIFF=$(cat /tmp/changed.txt )
           for dir in ${DIFF}; do
             if [ -d "$dir" ]; then
-              
+              terraform -chdir=${dir} show -no-color tf.plan > /tmp/prod-${i}.txt
               i=$((i+1))
             fi
           done
@@ -106,7 +106,7 @@ jobs:
             fi
           done
         shell: bash
-
+        
       - name : list tmp
         run : |
           ls /tmp/
