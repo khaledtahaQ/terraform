@@ -141,15 +141,18 @@ jobs:
                     if (file.startsWith(filePrefix)) {
                         const filePath = path.join(directoryPath, file);
                         const plan = fs.readFileSync(filePath, 'utf8');
+                        const folderPath = filePath.toString().replace("prod","path");
+                        const folderPathS = fs.readFileSync(folderPath, 'utf8');
                         var plans = chunkSubstr(plan, maxGitHubBodyCharacters);
               for (let i = 0; i < plans.length; i++) {
               const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
               #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
               #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
               #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
+               #### Terraform Folder Path 🤖\`${folderPathS}\`
             
               <details><summary>Show Plan</summary>
-            
+              
               \`\`\`terraform\n
               ${plans[i]}
               \`\`\`
