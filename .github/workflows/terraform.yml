@@ -130,7 +130,7 @@ jobs:
                 files.forEach((file) => {
                     if (file.startsWith(filePrefix)) {
                         const filePath = path.join(directoryPath, file);
-                        const folderPath = filePath.replace("prod","path");
+                        const folderPath = filePath.toString().replace("prod","path");
                         const plan = fs.readFileSync(filePath, 'utf8');
                         const folderPathS = fs.readFileSync(folderPath, 'utf8');
                         var plans = chunkSubstr(plan, maxGitHubBodyCharacters);
