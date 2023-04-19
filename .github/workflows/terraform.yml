@@ -149,7 +149,7 @@ jobs:
                         #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
                         #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
                         #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
-                        path : ${folderPathS}
+                        
                         <details><summary>Show Plan</summary>
                       
                         \`\`\`terraform\n
