@@ -32,7 +32,7 @@ jobs:
               path=$(echo "${GITHUB_WORKSPACE}/${dir}" | xargs dirname)
               echo $path >> /tmp/changed.txt
           done
-          sed -i  "/^$(echo ${GITHUB_WORKSPACE}/.github/workflows | sed 's/\//\\\//g')/d" 
+          sed -i  "/^$(echo ${GITHUB_WORKSPACE}/.github/workflows | sed 's/\//\\\//g')/d" /tmp/temp-changed.txt
           cat /tmp/changed.txt
 
       - name: Terraform Format
