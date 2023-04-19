@@ -24,10 +24,6 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
 
-      - name: Set output
-        id: vars
-        run: echo ::set-output name=short_ref::${GITHUB_REF#refs/*/}
-
       - name : Get Changed Files
         run : |
           git diff --name-only origin/${{github.base_ref}} origin/${{ github.head_ref}} > /tmp/temp-changed.txt
@@ -92,11 +88,25 @@ jobs:
           for dir in ${DIFF}; do
             if [ -d "$dir" ]; then
               terraform -chdir=${dir} show -no-color tf.plan 2>&1 > /tmp/prod-${i}.txt
+              i=$((i+1))
+            fi
+          done
+        shell: bash
+
+      - name: get folder relative path
+        id: relative-path
+        if: github.event_name == 'pull_request'
+        run: |
+          i=0
+          DIFF=$(cat /tmp/changed.txt )
+          for dir in ${DIFF}; do
+            if [ -d "$dir" ]; then
               cat /tmp/prod-${i}.txt | grep -o  "chdir.*" | sed -e  "s/show -no-color tf.plan//g" | sed -e "s/^$(echo chdir=${GITHUB_WORKSPACE} | sed 's/\//\\\//g')//g" >/tmp/path-${i}.txt
               i=$((i+1))
             fi
           done
         shell: bash
+        
       - name : list tmp
         run : |
           ls /tmp/
