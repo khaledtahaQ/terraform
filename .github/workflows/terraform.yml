@@ -32,6 +32,7 @@ jobs:
               path=$(echo "${GITHUB_WORKSPACE}/${dir}" | xargs dirname)
               echo $path >> /tmp/changed.txt
           done
+          sed -i  "/^$(echo ${GITHUB_WORKSPACE}/.github/workflows | sed 's/\//\\\//g')/d" 
           cat /tmp/changed.txt
 
       - name: Terraform Format
@@ -87,12 +88,8 @@ jobs:
           DIFF=$(cat /tmp/changed.txt )
           for dir in ${DIFF}; do
             if [ -d "$dir" ]; then
-              if [ "$dir" != "/home/runner/work/terraform/terraform/.github/workflows" ]; then
-                terraform -chdir=${dir} show -no-color tf.plan 2>&1 > /tmp/prod-${i}.txt
-                i=$((i+1))
-              else
-                  echo "Both Strings are Equal."
-              fi
+              terraform -chdir=${dir} show -no-color tf.plan 2>&1 > /tmp/prod-${i}.txt
+              i=$((i+1))
             fi
           done
         shell: bash
@@ -110,7 +107,6 @@ jobs:
             fi
           done
         shell: bash
-        
       - name : list tmp
         run : |
           ls /tmp/
