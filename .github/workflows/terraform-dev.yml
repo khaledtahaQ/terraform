@@ -1,12 +1,12 @@
-name: "Terraform"
+name: "Terraform development environment"
 
 on:
   push:
     branches:
-      - main
+      - dev
   pull_request:
     branches:
-      - main
+      - dev
 
 jobs:
   terraform:
@@ -27,22 +27,21 @@ jobs:
       - name : Get Changed Files on pull_request
         if: github.event_name == 'pull_request'
         run : |
-          git diff --name-only origin/${{github.base_ref}} origin/${{ github.head_ref}} > /tmp/temp-changed.txt
+          git diff --name-only origin/${{github.base_ref}} origin/${{ github.head_ref}} -- src/envs/dev/ > /tmp/temp-changed.txt
           temp_dir=$(cat /tmp/temp-changed.txt) 
           for dir in ${temp_dir}; do
               path=$(echo "${GITHUB_WORKSPACE}/${dir}" | xargs dirname)
               echo $path >> /tmp/changed.txt
           done
-          sed -i  "/$(echo ${GITHUB_WORKSPACE}/.github/workflows | sed 's/\//\\\//g')/d" /tmp/changed.txt
           cat /tmp/changed.txt
 
       - name : Get Changed Files on push
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run : |
-          ls src/envs/prod > /tmp/temp-changed.txt
+          ls src/envs/dev > /tmp/temp-changed.txt
           temp_dir=$(cat /tmp/temp-changed.txt) 
           for dir in ${temp_dir}; do
-              path="${GITHUB_WORKSPACE}/src/envs/prod/${dir}"
+              path="${GITHUB_WORKSPACE}/src/envs/dev/${dir}"
               echo $path >> /tmp/changed.txt
           done
           cat /tmp/changed.txt
@@ -100,7 +99,7 @@ jobs:
           DIFF=$(cat /tmp/changed.txt )
           for dir in ${DIFF}; do
             if [ -d "$dir" ]; then
-              terraform -chdir=${dir} show -no-color tf.plan 2>&1 > /tmp/prod-${i}.txt
+              terraform -chdir=${dir} show -no-color tf.plan 2>&1 > /tmp/dev-${i}.txt
               i=$((i+1))
             fi
           done
@@ -114,7 +113,7 @@ jobs:
           DIFF=$(cat /tmp/changed.txt )
           for dir in ${DIFF}; do
             if [ -d "$dir" ]; then
-              cat /tmp/prod-${i}.txt | grep -o  "chdir.*" | sed -e  "s/show -no-color tf.plan//g" | sed -e "s/^$(echo chdir=${GITHUB_WORKSPACE} | sed 's/\//\\\//g')//g" >/tmp/path-${i}.txt
+              cat /tmp/dev-${i}.txt | grep -o  "chdir.*" | sed -e  "s/show -no-color tf.plan//g" | sed -e "s/^$(echo chdir=${GITHUB_WORKSPACE} | sed 's/\//\\\//g')//g" >/tmp/path-${i}.txt
               i=$((i+1))
             fi
           done
@@ -135,7 +134,7 @@ jobs:
             const fs = require("fs");
             const path = require('path');
             const directoryPath = '/tmp/';
-            const filePrefix = "prod";
+            const filePrefix = "dev";
             const maxGitHubBodyCharacters = 65536;
 
             // Split the Terraform plan into chunks if it's too big and can't fit into the GitHub Action
@@ -155,7 +154,7 @@ jobs:
                     if (file.startsWith(filePrefix)) {
                         const filePath = path.join(directoryPath, file);
                         const plan = fs.readFileSync(filePath, 'utf8');
-                        const folderPath = filePath.toString().replace("prod","path");
+                        const folderPath = filePath.toString().replace("dev","path");
                         var terrafromFolderPath = fs.readFileSync(folderPath, 'utf8');
                         terrafromFolderPath = terrafromFolderPath.slice(1);
                         var plans = chunkSubstr(plan, maxGitHubBodyCharacters);
@@ -195,7 +194,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY}}
         run: |
-          for dir in ${GITHUB_WORKSPACE}/src/envs/prod/*; do
+          for dir in ${GITHUB_WORKSPACE}/src/envs/dev/*; do
             if [ -d "$dir" ]; then
               terraform -chdir=$dir apply -auto-approve -input=false
             fi

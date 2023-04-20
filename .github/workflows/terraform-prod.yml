@@ -1,0 +1,202 @@
+name: "Terraform production environment"
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  terraform:
+    name: "Terraform"
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          ssh-key: ${{ secrets.GIT }}
+          fetch-depth: 0
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name : Get Changed Files on pull_request
+        if: github.event_name == 'pull_request'
+        run : |
+          git diff --name-only origin/${{github.base_ref}} origin/${{ github.head_ref}} -- src/envs/prod/> /tmp/temp-changed.txt
+          temp_dir=$(cat /tmp/temp-changed.txt) 
+          for dir in ${temp_dir}; do
+              path=$(echo "${GITHUB_WORKSPACE}/${dir}" | xargs dirname)
+              echo $path >> /tmp/changed.txt
+          done
+          cat /tmp/changed.txt
+
+      - name : Get Changed Files on push
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run : |
+          ls src/envs/prod > /tmp/temp-changed.txt
+          temp_dir=$(cat /tmp/temp-changed.txt) 
+          for dir in ${temp_dir}; do
+              path="${GITHUB_WORKSPACE}/src/envs/prod/${dir}"
+              echo $path >> /tmp/changed.txt
+          done
+          cat /tmp/changed.txt
+
+      - name: Terraform Format
+        id: fmt
+        run: |
+          DIFF=$(cat /tmp/changed.txt )
+          for dir in ${DIFF}; do
+            if [ -d "$dir" ]; then
+              terraform fmt -check  "${dir}" 
+            fi
+          done
+
+      - name: Terraform Init
+        id: init
+        run: |
+          DIFF=$(cat /tmp/changed.txt )
+          for dir in ${DIFF}; do
+            if [ -d "$dir" ]; then
+              terraform -chdir=${dir} init
+            fi
+          done
+
+      - name: Terraform Validate
+        id: validate
+        run: |
+          DIFF=$(cat /tmp/changed.txt )
+          for dir in ${DIFF}; do
+            if [ -d "$dir" ]; then
+              terraform -chdir=${dir} validate 
+            fi
+          done
+
+      - name: Terraform Plan
+        id: plan
+        if: github.event_name == 'pull_request'
+        env:
+          AWS_ACCESS_KEY_ID:  ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY:  ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          DIFF=$(cat /tmp/changed.txt )
+          for dir in ${DIFF}; do
+            if [ -d "$dir" ]; then
+              terraform -chdir=${dir} plan -no-color -input=false -out tf.plan
+            fi
+          done
+        continue-on-error: true
+
+      - name: Terraform Show
+        id: show
+        if: github.event_name == 'pull_request'
+        run: |
+          i=0
+          DIFF=$(cat /tmp/changed.txt )
+          for dir in ${DIFF}; do
+            if [ -d "$dir" ]; then
+              terraform -chdir=${dir} show -no-color tf.plan 2>&1 > /tmp/prod-${i}.txt
+              i=$((i+1))
+            fi
+          done
+        shell: bash
+
+      - name: get folder relative path
+        id: relative-path
+        if: github.event_name == 'pull_request'
+        run: |
+          i=0
+          DIFF=$(cat /tmp/changed.txt )
+          for dir in ${DIFF}; do
+            if [ -d "$dir" ]; then
+              cat /tmp/prod-${i}.txt | grep -o  "chdir.*" | sed -e  "s/show -no-color tf.plan//g" | sed -e "s/^$(echo chdir=${GITHUB_WORKSPACE} | sed 's/\//\\\//g')//g" >/tmp/path-${i}.txt
+              i=$((i+1))
+            fi
+          done
+        shell: bash
+
+      - name : list tmp
+        run : |
+          ls /tmp/
+  
+      - name: Update Pull Request
+        uses: actions/github-script@v6
+        if: github.event_name == 'pull_request'
+        env:
+          PLAN: "${{ steps.plan.outputs.stdout }}"
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require("fs");
+            const path = require('path');
+            const directoryPath = '/tmp/';
+            const filePrefix = "prod";
+            const maxGitHubBodyCharacters = 65536;
+
+            // Split the Terraform plan into chunks if it's too big and can't fit into the GitHub Action
+            function chunkSubstr(str, size) {
+                const numChunks = Math.ceil(str.length / size)
+                const chunks = new Array(numChunks)
+                for (let i = 0, o = 0; i < numChunks; ++i, o += size) {
+                    chunks[i] = str.substr(o, size)
+                }
+                return chunks
+            }
+
+
+            try {
+                const files = fs.readdirSync(directoryPath);
+                files.forEach((file) => {
+                    if (file.startsWith(filePrefix)) {
+                        const filePath = path.join(directoryPath, file);
+                        const plan = fs.readFileSync(filePath, 'utf8');
+                        const folderPath = filePath.toString().replace("prod","path");
+                        var terrafromFolderPath = fs.readFileSync(folderPath, 'utf8');
+                        terrafromFolderPath = terrafromFolderPath.slice(1);
+                        var plans = chunkSubstr(plan, maxGitHubBodyCharacters);
+              for (let i = 0; i < plans.length; i++) {
+              const output = `#### Terraform Folder Path 📁 \n \`${terrafromFolderPath}\`
+              #### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+              #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
+              #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+              #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
+              
+            
+              <details><summary>Show Plan</summary>
+              
+              \`\`\`terraform\n
+              ${plans[i]}
+              \`\`\`
+            
+              </details>
+            
+                *Pushed by: @${{ github.actor }}, Working Directory: \`${{ inputs.working-directory }}\`, Action: \`${{ github.event_name }}\`*`;
+            
+                github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+              })
+              }
+                    }
+                });
+            } catch (err) {
+                console.error(`Error reading directory ${directoryPath}: ${err}`);
+            }
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY}}
+        run: |
+          for dir in ${GITHUB_WORKSPACE}/src/envs/prod/*; do
+            if [ -d "$dir" ]; then
+              terraform -chdir=$dir apply -auto-approve -input=false
+            fi
+          done
+
