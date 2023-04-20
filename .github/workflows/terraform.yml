@@ -24,7 +24,8 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
 
-      - name : Get Changed Files
+      - name : Get Changed Files on pull_request
+        if: github.event_name == 'pull_request'
         run : |
           git diff --name-only origin/${{github.base_ref}} origin/${{ github.head_ref}} > /tmp/temp-changed.txt
           temp_dir=$(cat /tmp/temp-changed.txt) 
@@ -33,6 +34,17 @@ jobs:
               echo $path >> /tmp/changed.txt
           done
           sed -i  "/$(echo ${GITHUB_WORKSPACE}/.github/workflows | sed 's/\//\\\//g')/d" /tmp/changed.txt
+          cat /tmp/changed.txt
+
+      - name : Get Changed Files on push
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run : |
+          ls src/envs/prod > /tmp/temp-changed.txt
+          temp_dir=$(cat /tmp/temp-changed.txt) 
+          for dir in ${temp_dir}; do
+              path="${GITHUB_WORKSPACE}/src/envs/prod/${dir}"
+              echo $path >> /tmp/changed.txt
+          done
           cat /tmp/changed.txt
 
       - name: Terraform Format
@@ -69,7 +81,7 @@ jobs:
         id: plan
         if: github.event_name == 'pull_request'
         env:
-          AWS_ACCESS_KEY_ID:  ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_ACCESS_KEY_ID:  ${{ secret213.180.203s.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY:  ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
           DIFF=$(cat /tmp/changed.txt )
@@ -107,9 +119,11 @@ jobs:
             fi
           done
         shell: bash
+
       - name : list tmp
         run : |
           ls /tmp/
+  
       - name: Update Pull Request
         uses: actions/github-script@v6
         if: github.event_name == 'pull_request'
