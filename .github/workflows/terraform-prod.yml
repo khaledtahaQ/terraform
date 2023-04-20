@@ -8,6 +8,10 @@ on:
     branches:
       - main
 
+permissions:
+  id-token: write 
+  contents: read 
+
 jobs:
   terraform:
     name: "Terraform"
@@ -20,6 +24,12 @@ jobs:
         with:
           ssh-key: ${{ secrets.GIT }}
           fetch-depth: 0
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: arn:aws:iam::413504967007:role/githuactions-test
+          role-duration-seconds: 3600  # 1 hour
+          aws-region: us-east-1
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
@@ -79,9 +89,6 @@ jobs:
       - name: Terraform Plan
         id: plan
         if: github.event_name == 'pull_request'
-        env:
-          AWS_ACCESS_KEY_ID:  ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY:  ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
           DIFF=$(cat /tmp/changed.txt )
           for dir in ${DIFF}; do
@@ -190,9 +197,6 @@ jobs:
             }
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY}}
         run: |
           for dir in ${GITHUB_WORKSPACE}/src/envs/prod/*; do
             if [ -d "$dir" ]; then
