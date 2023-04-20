@@ -13,9 +13,6 @@ terraform {
 
 }
 
-
-
-
 provider "aws" {
   region = "us-east-1"
 }
@@ -38,7 +35,7 @@ data "aws_ami" "ubuntu" {
   owners = ["099720109477"] # Canonical
 }
 
-resource "aws_instance" "web" {
+resource "aws_instance" "web3" {
   ami           = data.aws_ami.ubuntu.id
   instance_type = "t2.micro"
   subnet_id     = "subnet-0f5e8a6adba3ccd7f"
@@ -52,7 +49,7 @@ resource "aws_instance" "web" {
               EOF
 }
 
-resource "aws_security_group" "web-sg" {
+resource "aws_security_group" "web-sg3" {
   name = "${random_pet.sg.id}-sg"
   ingress {
     from_port   = 8080
@@ -70,7 +67,7 @@ resource "aws_security_group" "web-sg" {
 }
 
 output "web-address" {
-  value = "${aws_instance.web.public_dns}:8080"
+  value = "${aws_instance.web3.public_dns}:8080"
 }
 
 
